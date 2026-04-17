@@ -1,0 +1,28 @@
+# Testing Framework Dependencies
+# Install with: pip install -r test-requirements.txt
+
+# Core pytest framework
+pytest>=8.0.0
+pytest-asyncio>=0.24.0  # Async test support (CRITICAL: version 0.24+ required)
+pytest-cov>=5.0.0       # Code coverage reporting
+pytest-order>=1.2.0     # Test execution ordering
+pytest-dotenv>=0.5.2    # .env.test file loading
+pytest-timeout>=2.3.0   # Test timeout management
+
+# HTTP client for API testing
+httpx>=0.27.0          # Async HTTP client for integration tests
+
+# Azure AI Evaluation Framework
+azure-ai-evaluation>=1.0.0  # LLM response quality evaluation
+applicationinsights>=0.11.10  # Application Insights telemetry for portal tracking
+
+# Azure SDK (for real service connections in integration/e2e tests)
+azure-identity>=1.16.0           # Azure authentication
+azure-storage-blob>=12.20.0      # Blob storage operations
+azure-data-tables>=12.7.0        # Table storage operations
+azure-search-documents>=11.6.0b12  # AI Search operations
+azure-ai-projects>=1.1.0b4       # AI Foundry projects
+
+# Additional testing utilities
+anyio>=4.0.0           # Async framework support
+nest-asyncio>=1.6.0    # Nested async loop support

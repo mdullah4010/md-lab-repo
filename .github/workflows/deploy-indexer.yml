@@ -1,0 +1,507 @@
+name: Deploy Indexer Service to Azure Container Apps
+        
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional image tag override (default: latest)"
+        required: false
+      force_rebuild:
+        description: "Set to true to force fresh ACR build"
+        required: false
+        type: boolean
+      build_method:
+        description: "Container build method"
+        required: false
+        type: choice
+        default: "acr"
+        options:
+          - acr
+          - docker
+  push:
+    paths:
+      - 'foundry-agents/indexer/**'
+      - '.github/workflows/deploy-indexer.yml'
+    branches:
+      - bahramr/testingX
+
+concurrency:
+  group: deploy-indexer-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP }}
+  LOCATION: ${{ vars.LOCATION }}
+  INDEXER_CONTAINER_APP_NAME: ${{ vars.INDEXER_CONTAINER_APP_NAME || 'indexer' }}
+  CONTAINER_APP_ENV_NAME: ${{ vars.CONTAINER_APP_ENV_NAME }}
+  ACR_NAME: ${{ vars.ACR_NAME }}
+  IMAGE_NAME: ${{ vars.INDEXER_IMAGE_NAME || 'indexer' }}
+  PYTHON_VERSION: ${{ vars.PYTHON_VERSION || '3.11' }}
+
+jobs:
+  deploy:
+    name: Build & Deploy Indexer
+    runs-on: [self-hosted, mcaps-microsoft-ai-first-migrate-insights-agent]
+    timeout-minutes: 45
+    environment:
+      name: rg-ai-lz-bicep-int-eastus2-v1_9_7
+      url: ${{ steps.ca.outputs.fqdn }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Azure CLI
+        run: |
+          if ! command -v az &> /dev/null; then
+            echo "Azure CLI not found, installing..."
+            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          else
+            echo "Azure CLI already installed: $(az version --query '"azure-cli"' -o tsv)"
+          fi
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: false
+
+      - name: Verify Azure Identity
+        run: |
+          CURRENT_USER_ID=$(az account show --query user.name -o tsv)
+          echo "CURRENT USER ID (first 12 chars): ${CURRENT_USER_ID:0:12}..."
+          SP_OBJECT_ID=$(az ad sp show --id "$CURRENT_USER_ID" --query id -o tsv 2>/dev/null || echo "")
+          SP_NAME=$(az ad sp show --id "$CURRENT_USER_ID" --query appDisplayName -o tsv 2>/dev/null || echo "")
+          if [ -n "$SP_OBJECT_ID" ]; then
+            echo "SP NAME (first 12 chars): ${SP_NAME:0:12}..."
+            echo "SP OBJECT ID (first 12 chars): ${SP_OBJECT_ID:0:12}..."
+            echo ""
+            echo "=== Roles Assigned to this identity ==="
+            az role assignment list --assignee "$SP_OBJECT_ID" --all --query "[].{Role:roleDefinitionName, Scope:scope}" -o table
+          else
+            echo "Could not determine object ID for client ID: ${AZURE_CLIENT_ID:0:8}..."
+          fi
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+
+      - name: Ensure Azure CLI extensions
+        run: |
+          az extension add --name containerapp --upgrade --yes
+          az extension add --name log-analytics --upgrade --yes || true
+
+      - name: Verify ACR Exists (Required)
+        id: acr
+        run: |
+          set -e
+          echo "Checking for existing ACR: $ACR_NAME"
+          
+          if ! az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "❌ ERROR: Azure Container Registry '$ACR_NAME' not found in resource group '$RESOURCE_GROUP'"
+            echo ""
+            echo "Please create the ACR first using:"
+            echo "  az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --admin-enabled true --location $LOCATION"
+            echo ""
+            echo "Or update the ACR_NAME environment variable in the workflow to use an existing ACR."
+            exit 1
+          fi
+          
+          echo "✅ ACR '$ACR_NAME' found"
+          ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --query loginServer -o tsv | tr -d '[:space:]')
+          echo "ACR Login Server: $ACR_LOGIN_SERVER"
+          echo "login-server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Install Docker if needed
+        if: ${{ inputs.build_method == 'docker' }}
+        run: |
+          if command -v docker &> /dev/null; then
+            echo "✅ Docker is already installed: $(docker --version)"
+          else
+            echo "⚠️  Docker not installed - installing Docker..."
+            sudo apt-get update
+            sudo apt-get install -y \
+              ca-certificates \
+              curl \
+              gnupg \
+              lsb-release
+            
+            # Add Docker's official GPG key
+            sudo mkdir -p /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            
+            # Set up the repository
+            echo \
+              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            
+            # Install Docker Engine
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            
+            # Add current user to docker group
+            sudo usermod -aG docker $USER
+            
+            # Restart docker service to ensure proper permissions
+            sudo systemctl restart docker
+            
+            # Change socket permissions as immediate workaround
+            sudo chmod 666 /var/run/docker.sock
+            
+            echo "✅ Docker installed successfully"
+            echo "Docker version: $(docker --version)"
+          fi
+          
+          # Ensure docker socket has proper permissions
+          if [ ! -w /var/run/docker.sock ]; then
+            echo "⚠️  Docker socket not writable, fixing permissions..."
+            sudo chmod 666 /var/run/docker.sock
+          fi
+
+      - name: ACR Login
+        if: ${{ inputs.build_method == 'docker' }}
+        run: |
+          echo "Logging in to ACR: $ACR_NAME"
+          az acr login --name "$ACR_NAME"
+          echo "✅ ACR login successful"
+
+      - name: Clean Python cache before build
+        working-directory: foundry-agents/indexer
+        run: |
+          echo "🧹 Cleaning up Python cache to avoid library mismatch issues..."
+          rm -rf .venv venv __pycache__ .pytest_cache 2>/dev/null || true
+          find . -name "*.pyc" -delete 2>/dev/null || true
+          find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          echo "✅ Python cache cleaned"
+
+      - name: Free up disk space for Docker build
+        if: ${{ inputs.build_method == 'docker' }}
+        run: |
+          echo "🧹 Freeing up disk space..."
+          df -h
+          echo ""
+          echo "Removing unused Docker resources..."
+          docker system prune -af --volumes || true
+          echo ""
+          echo "Cleaning package manager cache..."
+          sudo apt-get clean || true
+          sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* || true
+          echo ""
+          echo "Disk space after cleanup:"
+          df -h
+
+      - name: Build & Push with ACR Build (Cloud Build)
+        if: ${{ inputs.build_method != 'docker' }}
+        id: acr_build
+        working-directory: foundry-agents/indexer
+        run: |
+          ACR_LOGIN=${{ steps.acr.outputs.login-server }}
+          IMAGE_REF="$ACR_LOGIN/${IMAGE_NAME}:latest"
+          
+          # Set version information
+          BUILD_NUMBER="${{ github.run_number }}"
+          GIT_COMMIT="${{ github.sha }}"
+          DEPLOYMENT_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          echo "🚀 Building with ACR Build (cloud-based): $IMAGE_REF"
+          echo "Build Number: $BUILD_NUMBER"
+          echo "Git Commit: ${GIT_COMMIT:0:8}"
+          echo "Deployment Time: $DEPLOYMENT_TIME"
+          
+          # Check current ACR network and export policy settings
+          # publicNetworkAccess can be "Enabled" or "Disabled"
+          # exportPolicy.status can be "enabled" or "disabled"
+          ACR_PUBLIC_ACCESS=$(az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --query "publicNetworkAccess" -o tsv 2>/dev/null | tr -d '[:space:]')
+          ACR_EXPORT_POLICY=$(az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --query "policies.exportPolicy.status" -o tsv 2>/dev/null | tr -d '[:space:]')
+          echo "ACR Public Network Access: $ACR_PUBLIC_ACCESS"
+          echo "ACR Export Policy: $ACR_EXPORT_POLICY"
+          echo "acr-public-access=$ACR_PUBLIC_ACCESS" >> $GITHUB_OUTPUT
+          
+          # Track if we modified settings (to restore them later)
+          MODIFIED_EXPORT_POLICY=false
+          MODIFIED_PUBLIC_ACCESS=false
+          
+          # Enable export policy if disabled (required before enabling public access)
+          if [ "$ACR_EXPORT_POLICY" == "disabled" ]; then
+            echo "⚠️  ACR export policy is disabled. Enabling temporarily..."
+            if az acr update --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --allow-exports true --output none 2>&1; then
+              echo "✅ ACR export policy enabled temporarily"
+              MODIFIED_EXPORT_POLICY=true
+            else
+              echo "⚠️  Could not enable export policy. Proceeding anyway..."
+            fi
+          fi
+          
+          # Attempt to enable public access if currently disabled
+          if [ "$ACR_PUBLIC_ACCESS" == "Disabled" ]; then
+            echo "⚠️  ACR has public network access disabled. Attempting to enable for build..."
+            if az acr update --name "$ACR_NAME" --public-network-enabled true --default-action Allow --output none 2>&1; then
+              echo "✅ ACR public access enabled temporarily"
+              MODIFIED_PUBLIC_ACCESS=true
+            else
+              echo "⚠️  Could not enable public access. Proceeding anyway (runner may have private access)..."
+            fi
+          else
+            echo "ℹ️  ACR public access is already enabled (publicNetworkAccess: $ACR_PUBLIC_ACCESS)"
+          fi
+          
+          # Run the ACR build
+          BUILD_SUCCESS=true
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "${IMAGE_NAME}:latest" \
+            --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
+            --build-arg GIT_COMMIT="$GIT_COMMIT" \
+            --build-arg DEPLOYMENT_TIME="$DEPLOYMENT_TIME" \
+            --file Dockerfile \
+            . || BUILD_SUCCESS=false
+          
+          # Restore ACR settings after build (only if we modified them)
+          if [ "$MODIFIED_PUBLIC_ACCESS" == "true" ]; then
+            echo "🔒 Restoring ACR public network access restrictions..."
+            az acr update --name "$ACR_NAME" --public-network-enabled false --default-action Deny --output none
+            echo "✅ ACR public network access restrictions restored"
+          fi
+          
+          if [ "$MODIFIED_EXPORT_POLICY" == "true" ]; then
+            echo "🔒 Restoring ACR export policy restrictions..."
+            az acr update --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --allow-exports false --output none
+            echo "✅ ACR export policy restrictions restored"
+          fi
+          
+          # Exit with error if build failed
+          if [ "$BUILD_SUCCESS" != "true" ]; then
+            echo "❌ ACR Build failed"
+            exit 1
+          fi
+          
+          echo "✅ ACR Build completed and image pushed: $IMAGE_REF"
+
+      - name: Build & Push with Docker (Local Build)
+        if: ${{ inputs.build_method == 'docker' }}
+        working-directory: foundry-agents/indexer
+        run: |
+          ACR_LOGIN=${{ steps.acr.outputs.login-server }}
+          IMAGE_REF="$ACR_LOGIN/${IMAGE_NAME}:latest"
+          
+          # Set version information
+          BUILD_NUMBER="${{ github.run_number }}"
+          GIT_COMMIT="${{ github.sha }}"
+          DEPLOYMENT_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          echo "🐳 Building with Docker (local build): $IMAGE_REF"
+          echo "Build Number: $BUILD_NUMBER"
+          echo "Git Commit: ${GIT_COMMIT:0:8}"
+          echo "Deployment Time: $DEPLOYMENT_TIME"
+          
+          docker build --no-cache \
+            --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
+            --build-arg GIT_COMMIT="$GIT_COMMIT" \
+            --build-arg DEPLOYMENT_TIME="$DEPLOYMENT_TIME" \
+            -t "$IMAGE_REF" \
+            -f Dockerfile .
+          
+          echo "Pushing: $IMAGE_REF"
+          docker push "$IMAGE_REF"
+          
+          echo "✅ Docker build completed and image pushed: $IMAGE_REF"
+
+      - name: Verify Container Apps Environment exists
+        id: cae
+        run: |
+          if az containerapp env show --name "$CONTAINER_APP_ENV_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "✅ Container Apps Environment '$CONTAINER_APP_ENV_NAME' exists"
+          else
+            echo "❌ ERROR: Container Apps Environment '$CONTAINER_APP_ENV_NAME' not found in resource group '$RESOURCE_GROUP'"
+            echo ""
+            echo "Please create the Container Apps Environment first using:"
+            echo "  az containerapp env create --name $CONTAINER_APP_ENV_NAME --resource-group $RESOURCE_GROUP --location $LOCATION"
+            echo ""
+            echo "Or update the CONTAINER_APP_ENV_NAME environment variable in the workflow to use an existing environment."
+            exit 1
+          fi
+
+      - name: Create or Update Container App
+        id: ca
+        run: |
+          ACR_LOGIN=${{ steps.acr.outputs.login-server }}
+          IMAGE_REF="$ACR_LOGIN/${IMAGE_NAME}:latest"
+          
+          # Prepare environment variables from GitHub Environment
+          ENV_VARS="PYTHONPATH=/app"
+          ENV_VARS="$ENV_VARS LOG_LEVEL=${{ vars.LOG_LEVEL || 'INFO' }}"
+          ENV_VARS="$ENV_VARS AZURE_EXISTING_AIPROJECT_ENDPOINT=${{ vars.AZURE_EXISTING_AIPROJECT_ENDPOINT }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_API_VERSION=${{ vars.AZURE_OPENAI_API_VERSION }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${{ vars.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_ENDPOINT=${{ vars.AZURE_OPENAI_ENDPOINT }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_ENDPOINT2=${{ vars.AZURE_OPENAI_ENDPOINT2 }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_EMBED_DIM=${{ vars.AZURE_OPENAI_EMBED_DIM }}"
+          ENV_VARS="$ENV_VARS AZURE_SEARCH_ENDPOINT=${{ vars.AZURE_SEARCH_ENDPOINT }}"
+          ENV_VARS="$ENV_VARS AZURE_SEARCH_INDEX=${{ vars.AZURE_SEARCH_INDEX }}"
+          ENV_VARS="$ENV_VARS AZURE_SEARCH_SEMANTIC_CONFIG=${{ vars.AZURE_SEARCH_SEMANTIC_CONFIG }}"
+          ENV_VARS="$ENV_VARS AZURE_STORAGE_ACCOUNT_NAME=${{ vars.AZURE_STORAGE_ACCOUNT_NAME }}"
+          ENV_VARS="$ENV_VARS AZURE_STORAGE_ACCOUNT_URL=${{ vars.AZURE_STORAGE_ACCOUNT_URL }}"
+          ENV_VARS="$ENV_VARS APP_VERBOSE=${{ vars.APP_VERBOSE || '1' }}"
+          ENV_VARS="$ENV_VARS USE_MANAGED_IDENTITY=${{ vars.USE_MANAGED_IDENTITY || 'true' }}"
+          ENV_VARS="$ENV_VARS USE_MANAGED_IDENTITY_FOR_AOAI=${{ vars.USE_MANAGED_IDENTITY_FOR_AOAI || 'true' }}"
+          ENV_VARS="$ENV_VARS APPLICATIONINSIGHTS_CONNECTION_STRING=${{ vars.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
+          
+          if az containerapp show --name "$INDEXER_CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "Updating existing container app"
+            az containerapp update \
+              --name "$INDEXER_CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --image "$IMAGE_REF" \
+              --set-env-vars $ENV_VARS \
+              --output none
+          else
+            echo "Creating container app"
+            az containerapp create \
+              --name "$INDEXER_CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "$CONTAINER_APP_ENV_NAME" \
+              --image "$IMAGE_REF" \
+              --registry-server "$ACR_LOGIN" \
+              --registry-identity system \
+              --target-port 8080 \
+              --ingress external \
+              --min-replicas 1 \
+              --max-replicas 3 \
+              --cpu 1.0 --memory 2.0Gi \
+              --env-vars $ENV_VARS \
+              --output none
+          fi
+          
+          FQDN=$(az containerapp show --name "$INDEXER_CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "fqdn=https://$FQDN" >> $GITHUB_OUTPUT
+
+      - name: Get Managed Identity and Assign RBAC Roles
+        run: |
+          IDENTITY_OBJECT_ID=$(az containerapp identity show \
+            --name "$INDEXER_CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query principalId \
+            --output tsv | tr -d '[:space:]')
+          
+          echo "Managed identity principalId: $IDENTITY_OBJECT_ID"
+          echo ""
+          echo "Assigning RBAC roles (will skip if already assigned)..."
+          
+          # Search Index Data Contributor on the AI Search service
+          az role assignment create \
+            --assignee-object-id "$IDENTITY_OBJECT_ID" \
+            --role "Search Index Data Contributor" \
+            --scope "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Search/searchServices/${{ vars.AZURE_SEARCH_INDEX }}" \
+            2>/dev/null && echo "✓ Search Index Data Contributor role assigned" || echo "⚠ Search Index role already assigned or failed"
+          
+          # Search Service Contributor on the AI Search service
+          az role assignment create \
+            --assignee-object-id "$IDENTITY_OBJECT_ID" \
+            --role "Search Service Contributor" \
+            --scope "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Search/searchServices/${{ vars.AZURE_SEARCH_INDEX }}" \
+            2>/dev/null && echo "✓ Search Service Contributor role assigned" || echo "⚠ Search Service role already assigned or failed"
+          
+          # Storage Blob Data Reader on the Storage Account
+          az role assignment create \
+            --assignee-object-id "$IDENTITY_OBJECT_ID" \
+            --role "Storage Blob Data Reader" \
+            --scope "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/${{ vars.AZURE_STORAGE_ACCOUNT_NAME }}" \
+            2>/dev/null && echo "✓ Storage Blob Data Reader role assigned" || echo "⚠ Storage Blob role already assigned or failed"
+          
+          # Azure AI User on the Azure AI Foundry Service
+          az role assignment create \
+            --assignee-object-id "$IDENTITY_OBJECT_ID" \
+            --role "Azure AI User" \
+            --scope "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.CognitiveServices/accounts/${{ vars.AZURE_AI_PROJECT_NAME }}" \
+           2>/dev/null && echo "✓ Azure AI User role assigned" || echo "⚠ Azure AI User role already assigned or failed"
+          
+ 
+      - name: Health Check (best-effort)
+        continue-on-error: true
+        run: |
+          echo "Checking health endpoint..."
+          FQDN=${{ steps.ca.outputs.fqdn }}
+          if command -v curl >/dev/null 2>&1; then
+            curl -fk "$FQDN/health" || true
+          else
+            echo "curl not installed on runner; skipping"
+          fi
+
+      - name: Output summary
+        run: |
+          BUILD_METHOD="${{ inputs.build_method || 'acr' }}"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Indexer Service Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "* Container App: ${INDEXER_CONTAINER_APP_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "* Environment: ${CONTAINER_APP_ENV_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "* Resource Group: ${RESOURCE_GROUP}" >> $GITHUB_STEP_SUMMARY
+          echo "* Image: ${IMAGE_NAME}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "* Build Method: ${BUILD_METHOD}" >> $GITHUB_STEP_SUMMARY
+          echo "* FQDN: ${{ steps.ca.outputs.fqdn }}" >> $GITHUB_STEP_SUMMARY
+          echo "* ACR: ${ACR_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Endpoints:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Health: ${{ steps.ca.outputs.fqdn }}/health" >> $GITHUB_STEP_SUMMARY
+          echo "- Index API: ${{ steps.ca.outputs.fqdn }}/api/index" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Command:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl -X POST ${{ steps.ca.outputs.fqdn }}/api/index \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -H 'Content-Type: application/json' \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -d '{\"appId\": \"your-app-id\", \"container\": \"your-container\"}'" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup workspace after deployment
+        if: always()
+        run: |
+          echo "🧹 Cleaning up workspace after deployment..."
+          echo "Initial disk space:"
+          df -h
+          echo ""
+          
+          # Remove ALL workspace files
+          echo "Removing workspace files..."
+          cd /
+          rm -rf ${{ github.workspace }}/* 2>/dev/null || true
+          rm -rf ${{ github.workspace }}/.* 2>/dev/null || true
+          
+          # Clean ALL Docker resources (build cache, images, containers, volumes, networks)
+          echo "Cleaning Docker resources..."
+          docker builder prune -af 2>/dev/null || true
+          docker image prune -af 2>/dev/null || true
+          docker container prune -f 2>/dev/null || true
+          docker volume prune -f 2>/dev/null || true
+          docker network prune -f 2>/dev/null || true
+          docker system prune -af --volumes 2>/dev/null || true
+          
+          # Clean package manager cache
+          echo "Cleaning package manager cache..."
+          sudo apt-get clean 2>/dev/null || true
+          sudo apt-get autoclean 2>/dev/null || true
+          sudo rm -rf /var/lib/apt/lists/* 2>/dev/null || true
+          
+          # Clean temp files and logs
+          echo "Cleaning temp files and logs..."
+          sudo rm -rf /tmp/* 2>/dev/null || true
+          sudo rm -rf /var/tmp/* 2>/dev/null || true
+          sudo rm -rf /var/log/*.log 2>/dev/null || true
+          sudo rm -rf /var/log/*.gz 2>/dev/null || true
+          
+          # Clean Python cache globally
+          echo "Cleaning Python cache..."
+          find /home -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find /home -name "*.pyc" -delete 2>/dev/null || true
+          find /home -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+          
+          echo ""
+          echo "Final disk space:"
+          df -h

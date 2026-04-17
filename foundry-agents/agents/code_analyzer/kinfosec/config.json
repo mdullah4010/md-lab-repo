@@ -1,0 +1,14 @@
+{
+    "agents": [
+        {
+            "name" : "Analyst",
+            "model": "gpt-4.1",
+            "instructions_file" : "analyst_instructions.txt",
+            "file_writer" : true,
+            "description": "This Agent is responsible for analyzing the application code and providing a structured output on security findings, the bad code practices and any vulnerabilities and creating the security report in markdown format."
+        }
+    ],
+    "base_model": "gpt-4.1",
+    "initial_message" : "I have uploaded a zip file that contains an application code. Please analyze the code thoroughly, identify all security vulnerabilities, bad coding practices, and generate a comprehensive security assessment report in markdown format. The report MUST include a structured table with the following columns: Deficiency ID, Severity, Status, Current Date, Deficiency Type, Reference, Owner, Affected Assets, Deficiency Title, Threat Description, and Proposed Mitigation. Save the report using the create_file function as 'code_security_assessment_report.md'.",
+    "uploads" : true
+}

@@ -1,0 +1,66 @@
+{
+  "discovery_prompts": [
+    {
+      "id": 1,
+      "name": "cluster_summary",
+      "prompt": "Provide a comprehensive cluster summary with the following exact structure:\n\n**Cluster Name:** {{cluster_name}}\n**Kubernetes Version:** [version]\n**Total Nodes:** [count]\n**Node Pools:**\n- [pool name]: [count] nodes ([VM size])\n\n**Total CPU:** [cores] cores\n**Total Memory:** [GB] GB\n**Resource Utilization:**\n- CPU Usage: [percentage]%\n- Memory Usage: [percentage]%\n\nProvide actual discovered values from the cluster. If no data is available, clearly state 'No data available for [cluster_name]' with Confidence: 0.",
+      "section": "cluster_summary",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": 2,
+      "name": "namespaces_discovery",
+      "prompt": "Discover ALL namespaces in the cluster, including system, default, and application namespaces.Search comprehensively for:\n\n1.Looking for explicit namespace manifests (apiVersion: v1 and kind: Namespace)\n2Searching for namespace references in all resource manifests (pods, deployments, services, configmaps, secrets, etc.)\n3Checking namespaces where pods and other resources are deployed, including active and inactive namespaces \n4 Including system namespaces (kube-system, kube-public, kube-node-lease, etc.) and any custom namespaces\n -Do NOT skip any namespaces or pods. Do NOT provide kubectl commands or analysis — only namespace names.",
+      "section": "namespaces",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": 3,
+      "name": "namespaces_and_applications",
+      "prompt": "For ALL discovered namespaces, analyze their applications and resources using this EXACT format:\n\n### Namespace: [namespace-name]\n\n**Namespace-level Resources:**\n- **PVCs:** [pvc1, pvc2] or None\n\n#### Application: [app]\n- **Deployments:** [deployment1, deployment2] or None\n- **Services:** [service1, service2] or None\n- **ConfigMaps:** [configmap1, configmap2] or None\n- **Secrets:** [secret1, secret2] or None\n- **Ingress:** [ingress1, ingress2] or None\n- **Images:** [image1:tag1, image2:tag2] or None\n- **StatefulSets:** [statefulset1] or None\n- **DaemonSets:** [daemonset1] or None\n- **Jobs:** [job1, job2] or None\n\nRepeat this structure for EACH namespace and application discovered.\n\nSEARCH STRATEGY:\n1. Services: Search for 'kind: Service', 'spec.selector', 'spec.ports', service YAML manifests\n2. ConfigMaps: Search for 'kind: ConfigMap', 'metadata: namespace:','data:', configmap YAML manifests\n3. Deployments: Search for 'kind: Deployment', deployment manifests, replica information\n4. Applications: Group resources by 'app' label, application names, or common prefixes\n5. Cross-reference: Match services to deployments by selectors and labels\n6. StatefulSets: Search for 'kind: StatefulSet', 'serviceName', volume claims\n7. Jobs: Search for 'kind: Job', batch workloads, completion status\n8. Secrets: Search for 'kind: Secret', secret references in deployments\n9. Ingress: Search for 'kind: Ingress', ingress controllers, host rules\n\nIMPORTANT:\n- Analyze ALL namespaces from the previous discovery step\n Perform iterative and exhaustive searches for all resource types (Deployments, Services, StatefulSets, DaemonSets, Jobs, ConfigMaps, Secrets, PVCs, Ingress) in each namespace.\n Group resources per application, identified by labels, selectors, or naming patterns.\n Include pod status (Running, Pending, etc.) if available.\n Provide actual resource names found in the cluster\n- Include ALL resource types at appropriate levels\n- Images should be listed at service/application level with actual container images used\n- PVCs should be listed at namespace level before applications\n- If a resource type has no items, write: '- **[ResourceType]:** None'\n- If no data is available for a namespace, state 'No resources found in [namespace-name]'\n- Do NOT provide kubectl commands or instructions\n- ACTIVELY search the cluster data for service and configmap manifests - they are likely present but being missed\n Explicitly instruct to include all deployments, services, and related resources regardless of ingress presence or labels.",
+      "section": "namespaces",
+      "order": 2.1,
+      "required": true
+    },
+    {
+      "id": 4,
+      "name": "application_details",
+      "prompt": "For each application discovered in the cluster, provide detailed configuration using this format:\n\n### [namespace]/[application-name]\n\n**Deployment: [deployment-name]**\n- Replicas: [ready]/[desired] ready\n- Images: [container-image1:tag1, container-image2:tag2]\n- Resources: [CPU request/limit], [Memory request/limit]\n- Environment: [environment-variable-summary]\n- Labels: [key=value, key=value]\n\n**Service: [service-name]**\n- Type: [ClusterIP/LoadBalancer/NodePort/ExternalName]\n- Port: [external-port] → [internal-port]\n- Selector: [selector-labels]\n- Images Used: [container-image1:tag1, container-image2:tag2]\n\n**ConfigMaps: [configmap-name]** (if exists)\n- Keys: [key1, key2, key3]\n- Mount Path: [mount-path]\n\n**Secrets: [secret-name]** (if exists)\n- Type: [secret-type]\n- Keys: [key1, key2]\n- Mount Path: [mount-path]\n\n**Ingress: [ingress-name]** (if exists)\n- Class: [ingress-class]\n- Host: [hostname]\n- TLS: [Enabled/Disabled]\n- Backend: [service:port]\n\n**StatefulSet: [statefulset-name]** (if exists)\n- Replicas: [ready]/[desired]\n- Images: [container-image:tag]\n- Resources: [CPU], [Memory]\n- Storage: [storage-size] per pod\n- Volume Claims: [pvc-template-name]\n\n**DaemonSet: [daemonset-name]** (if exists)\n- Images: [container-image:tag]\n- Resources: [CPU], [Memory]\n- Node Selector: [node-selector]\n\n**Jobs: [job-name]** (if exists)\n- Images: [container-image:tag]\n- Completions: [completions]\n- Parallelism: [parallelism]\n- Status: [Active/Succeeded/Failed]\n\nProvide ACTUAL configuration data from cluster resources. Include specific values for replicas, images, resource requests/limits, ports, etc.\n\nIf no detailed application data is available, state 'No application details available for {{cluster_name}}' with Confidence: 0.",
+      "section": "application_details",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": 4,
+      "name": "cluster_wide_resources",
+      "prompt": "Provide details about cluster-wide resources using this EXACT format:\n\n### Cluster-Wide Resources\n\n**Persistent Volumes (PV):**\n- **[pv-name]:**\n  - Capacity: [storage-size]\n  - Access Mode: [ReadWriteOnce/ReadOnlyMany/ReadWriteMany]\n  - Storage Class: [storage-class-name]\n  - Reclaim Policy: [Retain/Delete/Recycle]\n  - Status: [Available/Bound/Released/Failed]\n  - Claim: [namespace/pvc-name] (if bound)\n\n**Storage Classes (SC):**\n- **[sc-name]:**\n  - Provisioner: [provisioner-name]\n  - Parameters: [key=value, key=value]\n  - Volume Binding Mode: [Immediate/WaitForFirstConsumer]\n  - Allow Volume Expansion: [true/false]\n  - Reclaim Policy: [Delete/Retain]\n\n**Node Information:**\n- **Total Nodes:** [count]\n- **Node Types:** [node-type1: count, node-type2: count]\n- **Kubernetes Version:** [version]\n- **Container Runtime:** [runtime-name:version]\n\nIMPORTANT:\n- Provide actual resource names and configurations found in the cluster\n- Include all PVs and Storage Classes with their complete specifications\n- If no cluster-wide resources are found, state 'No cluster-wide resources available for {{cluster_name}}' with Confidence: 0\n- Do NOT provide kubectl commands or instructions",
+      "section": "cluster_resources",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": 5,
+      "name": "azure_recommendations",
+      "prompt": "Provide Azure Kubernetes Service (AKS) target recommendations based on Microsoft's Well-Architected Framework, using this structure:\n\n### Recommended VM SKUs\n- **System Node Pool:** [SKU] ([vCPU count] vCPU, [RAM] GB RAM) - [reason/use case]\n- **User Node Pool:** [SKU] ([vCPU count] vCPU, [RAM] GB RAM) - [reason/use case]\n- **High-Memory Workloads:** [SKU] ([vCPU count] vCPU, [RAM] GB RAM) - For [specific workload type]\n\n### Node Count\n- **Minimum:** [number] nodes ([reason])\n- **Recommended:** [number] nodes for high availability\n- **Auto-scaling:** Enable cluster autoscaler ([min]-[max] nodes range)\n\n### IP Address Requirements\n- **Subnet Size:** /[CIDR] ([number] addresses)\n- **Pods per Node:** [number] (default/configured)\n- **Total Pod IPs Required:** ~[number] IPs ([nodes] nodes × [pods per node])\n- **Service CIDR:** [CIDR range]\n- **Pod CIDR:** [CIDR range]\n\n### Cost Optimization\n- **Estimated Monthly Cost:** $[amount]-[amount] USD ([node count]-[node count] nodes, [VM SKU])\n- **Spot Instances:** Consider for [workload type] ([savings percentage]% savings)\n- **Reserved Instances:** [commitment period] commitment saves ~[percentage]%\n- **Right-sizing:** Monitor actual usage and scale down underutilized workloads\n- **Azure Hybrid Benefit:** Apply if Windows containers are used\n\nBase all recommendations on:\n1. Microsoft Well-Architected Framework for AKS\n2. Current cluster configuration (if available)\n3. Industry best practices for production workloads\n\nProvide specific SKU names (e.g., Standard_D4s_v3, Standard_E8s_v3) and concrete cost estimates.",
+      "section": "azure_recommendations",
+      "order": 5,
+      "required": true
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "description": "Kubernetes Discovery Agent prompts for generating comprehensive cluster discovery reports",
+    "last_updated": "2025-11-16",
+    "agent_type": "kubernetes_discovery",
+    "output_format": "markdown"
+  },
+  "instructions": {
+    "general": "For all prompts, if you do not have access to actual cluster data, respond with 'No data available' and set Confidence to 0. Do NOT provide kubectl commands or generic instructions.",
+    "response_format": "Return ONLY a JSON object with keys: Response (string), Confidence (number 0..1), Citation (string). The Response should contain the formatted data as specified in each prompt.",
+    "placeholder_replacement": {
+      "{{cluster_name}}": "Replace with the actual cluster name provided by the user"
+    }
+  }
+}

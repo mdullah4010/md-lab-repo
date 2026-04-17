@@ -1,0 +1,150 @@
+{
+  "title": "Azure Migration Planning Document",
+  "mcp_tools_allowed": [],
+  "sections_array": [
+    {
+      "id": "1. Detailed Configuration of Each Target Azure Service",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "For each Azure service in the target architecture, provide: What specific Azure service will be used (including SKU/tier)? What are the detailed configuration parameters (compute specs, storage, networking, scaling settings)? What are the security configurations (authentication, authorization, encryption)? What monitoring and logging will be implemented? What are the estimated costs? Include service-specific settings like connection strings, endpoints, and integration points with other services.",
+      "table_name": null
+    },
+    {
+      "id": "2. Detailed Scope, Assumptions and DoD Criteria",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the migration scope boundaries: What applications/systems are included and excluded? What are the key assumptions about current state, resources, timeline, and dependencies? List all Definition of Done criteria for each migration phase - what specific measurable outcomes indicate successful completion? Include acceptance criteria for performance, functionality, security, and business requirements.",
+      "table_name": null
+    },
+    {
+      "id": "3. Detailed Application Migration Process and Schedule",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Describe the step-by-step migration process: What is the overall migration approach (lift-and-shift, re-platform, refactor)? What are the detailed phases and their duration? What are the key milestones and deliverables for each phase? Who are the responsible teams and stakeholders? What tools and automation will be used? Include contingency plans and buffer time for each phase.",
+      "table_name": null
+    },
+    {
+      "id": "4.1 Migration Scope Breakdown - Application UI",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What UI technologies are being migrated? What changes are needed for cloud deployment? Are there any UI-specific Azure services needed (CDN, Static Web Apps)? What are the performance and accessibility requirements?",
+      "table_name": null
+    },
+    {
+      "id": "4.2 Migration Scope Breakdown - API",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What APIs need migration? What authentication/authorization changes are required? How will API endpoints change? What are the integration points with other services? What API management solutions will be used?",
+      "table_name": null
+    },
+    {
+      "id": "4.3 Migration Scope Breakdown - Database",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What databases are being migrated? What is the target Azure database service? What is the data volume and complexity? Are there schema changes needed? What is the data migration strategy and downtime requirements?",
+      "table_name": null
+    },
+    {
+      "id": "4.4 Migration Scope Breakdown - Cache",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What caching solutions are currently used? What Azure caching service will be implemented? How will cache invalidation and synchronization work? What performance requirements must be met?",
+      "table_name": null
+    },
+    {
+      "id": "4.5 Migration Scope Breakdown - Integrations",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What external systems integrate with the application? How will integration endpoints change? What authentication/security updates are needed? What is the integration testing strategy?",
+      "table_name": null
+    },
+    {
+      "id": "4.6 Migration Scope Breakdown - File Share",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What file storage is currently used? What Azure storage solution will replace it? How will file permissions and access controls migrate? What is the data transfer strategy for large files?",
+      "table_name": null
+    },
+    {
+      "id": "5. Task Breakdown for ADO",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "For Azure DevOps work item structure: What are the high-level Features that group the migration work? For each Feature, what User Stories capture the business value and requirements? For each User Story, what are the specific technical Tasks needed for implementation? Include effort estimates, assignees, and acceptance criteria for each level.",
+      "table_name": null
+    },
+    {
+      "id": "6. Dependency and Migration Sequence or Workflow",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Map all dependencies between applications, services, and infrastructure components. What is the critical path for migration? Which components must be migrated first to unblock others? What are the interdependencies that could cause delays? Create a visual workflow showing the migration sequence with decision points and parallel tracks.",
+      "table_name": null
+    },
+    {
+      "id": "7. Environment Wise Migration Plan",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "For each environment (Development, Staging, UAT, Production): What is the migration order and timeline? What are the environment-specific configurations and requirements? How will data be synchronized between environments? What testing will occur in each environment before promoting to the next? What rollback procedures exist for each environment?",
+      "table_name": null
+    },
+    {
+      "id": "8. Data Migration Strategy",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What is the complete data migration approach? What tools will be used for data extraction, transformation, and loading? How will data integrity and consistency be maintained? What is the acceptable downtime for data migration? How will large datasets be handled? What data validation and reconciliation processes will ensure accuracy? Include backup and rollback procedures.",
+      "table_name": null
+    },
+    {
+      "id": "9. Security and Compliance Planning (PHI/PII Data)",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What PHI/PII data exists in the system? What compliance requirements must be met (HIPAA, GDPR, etc.)? How will data be encrypted in transit and at rest? What access controls and audit logging are required? How will data privacy be maintained during migration? What security assessments and approvals are needed? Include data classification and handling procedures.",
+      "table_name": null
+    },
+    {
+      "id": "10.1 Testing and Validation Plan - Smoke Test Cases",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What critical functionality must work to confirm basic system operation? What automated smoke tests will run after each deployment? What are the pass/fail criteria?",
+      "table_name": null
+    },
+    {
+      "id": "10.2 Testing and Validation Plan - Functional Test",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What business processes and user workflows need validation? How will existing test cases be adapted for the cloud environment? What new functionality needs testing?",
+      "table_name": null
+    },
+    {
+      "id": "10.3 Testing and Validation Plan - Integration Test",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What system integrations require testing? How will end-to-end workflows be validated? What data flow testing is needed between systems?",
+      "table_name": null
+    },
+    {
+      "id": "10.4 Testing and Validation Plan - Performance Test",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What performance benchmarks must be met? What load testing scenarios will be executed? How will performance compare to current system metrics?",
+      "table_name": null
+    },
+    {
+      "id": "10.5 Testing and Validation Plan - Security Test",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What security vulnerabilities will be tested? What penetration testing is required? How will compliance controls be validated?",
+      "table_name": null
+    },
+    {
+      "id": "11. Detailed Configuration & Process of Business Continuity and Disaster Recovery",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What are the RTO (Recovery Time Objective) and RPO (Recovery Point Objective) requirements? How will Azure services be configured for high availability and disaster recovery? What backup strategies will be implemented? What failover procedures and testing schedules are needed? How will business operations continue during outages? Include detailed recovery procedures and communication plans.",
+      "table_name": null
+    },
+    {
+      "id": "12. Cutover Plan",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What is the detailed cutover strategy and timeline? What are the go/no-go criteria for cutover? Who are the key decision makers and stakeholders? What communication plan will keep users informed? How will DNS and traffic routing changes be managed? What verification steps confirm successful cutover? Include detailed responsibility matrix and escalation procedures.",
+      "table_name": null
+    },
+    {
+      "id": "13. Cutover Runbook",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Create step-by-step executable procedures for cutover: What are the exact commands and actions for each cutover step? Who executes each step and what are their contact details? What verification checks confirm each step's success? What rollback actions are available if issues occur? Include timing estimates, dependencies between steps, and emergency contact information.",
+      "table_name": null
+    },
+    {
+      "id": "14. Migration Timeline Env Wise",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Create a detailed timeline showing: When will each environment migration begin and complete? What are the key milestones and deliverables for each environment? How do environment migrations depend on each other? What resources are required during each phase? Include buffer time, risk factors that could impact timeline, and critical path analysis.",
+      "table_name": null
+    },
+    {
+      "id": "15. Post Migration Plan",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "What activities are needed after migration completion? How will system performance and stability be monitored? What optimization and tuning activities are planned? When will legacy systems be decommissioned? What documentation updates and knowledge transfer are needed? What lessons learned process will capture improvement opportunities? Include ongoing support responsibilities and success metrics measurement.",
+      "table_name": null
+    }
+  ]
+}

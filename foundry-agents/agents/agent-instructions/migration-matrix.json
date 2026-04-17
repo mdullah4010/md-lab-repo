@@ -1,0 +1,110 @@
+
+{
+    "Operating System": [
+        {"os_family": "Linux", "os": "RHEL", "source_vmware": ["9.x", "8.x"], "target_azure": ["9.x", "8.x"], "migration_type": "Re-Host"},
+        {"os_family": "Linux", "os": "RHEL", "source_vmware": ["6.x", "7.x"], "target_azure": ["8.x"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "SUSE", "source_vmware": ["15 SP4", "15 SP3", "15 SP2", "15 SP1", "15 SP0"], "target_azure": ["15 SP4", "15 SP3", "15 SP2", "15 SP1", "15 SP0"], "migration_type": "Re-Host"},
+        {"os_family": "Linux", "os": "SUSE", "source_vmware": ["11 SP4", "11 SP3", "12"], "target_azure": ["15 SP4"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "CentOS", "source_vmware": ["9.x"], "target_azure": ["9.x"], "migration_type": "Re-Host"},
+        {"os_family": "Linux", "os": "CentOS", "source_vmware": ["8.x"], "target_azure": ["RHEL 8.x", "CentOS 9.x"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "CentOS", "source_vmware": ["7.9", "7.7", "7.6", "7.5", "7.4", "6.x"], "target_azure": ["RHEL 8.x", "CentOS 9.x"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Ubuntu", "source_vmware": ["22.04", "21.04"], "target_azure": ["22.04 LTS"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Ubuntu", "source_vmware": ["20.04"], "target_azure": ["20.04 LTS"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Ubuntu", "source_vmware": ["19.04", "19.10", "18.04LTS", "16.04LTS"], "target_azure": ["20.04 LTS"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Ubuntu", "source_vmware": ["14.04LTS"], "target_azure": ["20.04 LTS"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Debian", "source_vmware": ["12", "11"], "target_azure": ["12", "11"], "migration_type": "Re-Host"},
+        {"os_family": "Linux", "os": "Debian", "source_vmware": ["10", "9", "8", "7"], "target_azure": ["11"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Oracle linux", "source_vmware": ["9", "8", "7.7-CI", "7.7"], "target_azure": ["9", "8", "7.7-CI", "7.7"], "migration_type": "Re-Host"},
+        {"os_family": "Linux", "os": "Oracle linux", "source_vmware": ["6"], "target_azure": ["7.7"], "migration_type": "Clean Deployment"},
+        {"os_family": "Linux", "os": "Kali Linux", "source_vmware": ["2016", "2017", "2018", "2019", "2020", "2021", "2022"], "target_azure": ["TBD"], "migration_type": "TBD"},
+        {"os_family": "Windows", "os": "Windows", "source_vmware": ["Windows Server 2003-2012"], "target_azure": ["Windows Server 2016"], "migration_type": "Clean Deployment"},
+        {"os_family": "Windows", "os": "Windows Server 2012r2", "source_vmware": ["Windows Server 2012r2"], "target_azure": ["Windows Server 2012r2"], "migration_type": "Re-Host"},
+        {"os_family": "Windows", "os": "Windows Server 2016", "source_vmware": ["Windows Server 2016"], "target_azure": ["Windows Server 2016"], "migration_type": "Re-Host"},
+        {"os_family": "Windows", "os": "Windows Server 2019", "source_vmware": ["Windows Server 2019"], "target_azure": ["Windows Server 2019"], "migration_type": "Re-Host"},
+        {"os_family": "Windows", "os": "Windows Server 2022", "source_vmware": ["Windows Server 2022"], "target_azure": ["Windows Server 2022"], "migration_type": "Re-Host"}
+    ],
+        "SQL database": [
+                {
+                    "source_version": "SQL Server 2008",
+                    "target_options": ["SQL IaaS (Azure VM)"]
+                },
+                {
+                    "source_version": "SQL Server 2008 R2",
+                    "target_options": ["SQL IaaS (Azure VM)"]
+                },
+                {
+                    "source_version": "SQL Server 2012",
+                    "target_options": ["Azure SQL MI", "SQL IaaS"]
+                },
+                {
+                    "source_version": "SQL Server 2014",
+                    "target_options": ["Azure SQL MI", "SQL IaaS"]
+                },
+                {
+                    "source_version": "SQL Server 2016",
+                    "target_options": ["Azure SQL MI", "Azure SQL DB", "SQL IaaS"]
+                },
+                {
+                    "source_version": "SQL Server 2017",
+                    "target_options": ["Azure SQL MI", "Azure SQL DB", "SQL IaaS"]
+                },
+                {
+                    "source_version": "SQL Server 2019",
+                    "target_options": ["Azure SQL MI", "Azure SQL DB", "SQL IaaS"]
+                },
+                {
+                    "source_version": "SQL Server 2022",
+                    "target_options": ["Azure SQL MI", "Azure SQL DB", "SQL IaaS"]
+                }
+        ],
+        "Oracle database": [
+            {
+                "db_type": "Oracle",
+                "source_version": "19c",
+                "target_version": "19c",
+                "target_type": ["ADB", "BaseDB", "Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "source_version": "12c",
+                "target_version": "19c",
+                "target_type": ["ADB", "BaseDB", "Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "source_version": "12c",
+                "target_version": "12c",
+                "target_type": ["Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "target_type": ["ADB", "BaseDB", "Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "source_version": "12c",
+                "target_version": "12c",
+                "target_type": ["Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "source_version": "11.2.0.4",
+                "target_version": "19c",
+                "target_type": ["ADB", "BAseDB", "Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "source_version": "11.2.0.4",
+                "target_version": "11.2.0.4",
+                "target_type": ["Exacs", "Oracle on IaaS"]
+            },
+            {
+                "db_type": "Oracle",
+                "source_version": "<=11.2.0.3",
+                "target_version": "11.2.0.4",
+                "target_type": ["Oracle on IaaS"]
+            }
+        ]
+}
+
+

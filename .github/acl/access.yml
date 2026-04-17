@@ -1,0 +1,28 @@
+# Documentation for ACL policy: https://aka.ms/gim/docs/policy/acl
+
+name: Access control list
+description: List of teams and their permission levels
+resource: repository
+where:
+configuration:
+  manageAccess:
+  - team: AIFirst-Migrate-POD1
+    role: Maintain
+  - team: AIFirst-Migrate-POD2
+    role: Maintain
+  - team: AIFirst-Migrate-POD3
+    role: Maintain
+  - team: AIFirst-Migrate-POD4
+    role: Maintain
+  - member: vimorra
+    role: Write
+  - member: tusrivas
+    role: Read
+  - member: criter
+    role: Read
+  - team: AIFM-PilotUsers
+    role: Read
+  - team: AIFM-Reviewers
+    role: Read
+
+

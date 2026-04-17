@@ -1,0 +1,85 @@
+{
+  "subscription_tags": [
+    {
+      "name": "cost_center",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Cost allocation and reporting. Example: XXXXX."
+    },
+    {
+      "name": "budget_owner",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Person or team responsible for cost reporting and alerting. Email address, lowercase."
+    },
+    {
+      "name": "subscription_owner",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Responsible for Subscription. Email address, lowercase."
+    },
+    {
+      "name": "technical_owner",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Architect or Lead for the project/programme. Email address, lowercase."
+    },
+    {
+      "name": "managed_by",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank."
+    },
+    {
+      "name": "programme",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Programme name to group multiple projects together. No spaces, lowercase."
+    },
+    {
+      "name": "confidentiality",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Security category of the data within the project."
+    },
+    {
+      "name": "business_unit",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank."
+    },
+    {
+      "name": "local_market",
+      "default": null,
+      "guidance": "Search the Azure AI knowledge base to determine which local market this application belongs to. Once identified, use the corresponding value from the mapping below. If the local market cannot be determined, leave the value blank."
+    },
+    {
+      "name": "environment",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Environment category. Allowed: mgmt, dev, test, preprod, prod, sandbox."
+    },
+    {
+      "name": "support_group",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank."
+    },
+    {
+      "name": "sec_assessment",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Security assessment ID."
+    },
+    {
+      "name": "created",
+      "default": "<dd-mm-yyyy>",
+      "guidance": "Provided automatically by the pipeline. Creation subscription date. Format: dd-mm-yyyy."
+    },
+    {
+      "name": "service_class",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Service class. Allowed: bronze, silver, gold, platinum."
+    },
+    {
+      "name": "repository",
+      "default": null,
+      "guidance": "Provided automatically by the pipeline. Created by an automation pipeline."
+    },
+    {
+      "name": "env_local",
+      "default": null,
+      "guidance": "Find the information from the Azure AI search index. If not found, leave the value blank. Local environment for DCC migration. Example: sit, uat, pat."
+    }
+  ],
+  "notes": "Wherever the value is to be provided by the customer, the agent should find values from the knowledge base."
+}

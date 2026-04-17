@@ -1,0 +1,1 @@
+PartitionKey,RowKey,Timestamp,ETag,Citation,Confidence,Description,DestinationHostname,DestinationIPAddress,InboundOrOutboundPortNumber,InboundOrOutboundProtocol,SourceHostname,SourceIPAddress

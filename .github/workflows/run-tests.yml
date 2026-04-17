@@ -1,0 +1,460 @@
+name: Run Agent Tests
+   
+# Manual workflow trigger with test category selection
+on:
+  workflow_dispatch:
+    inputs:
+      run_unit_tests:
+        description: "Run unit tests"
+        required: true
+        type: boolean
+        default: true
+      run_integration_tests:
+        description: "Run integration tests"
+        required: true
+        type: boolean
+        default: true
+      run_evaluation_tests:
+        description: "Run evaluation tests"
+        required: true
+        type: boolean
+        default: true
+      run_e2e_tests:
+        description: "Run end-to-end tests"
+        required: true
+        type: boolean
+        default: true
+  push:
+    paths:
+      - 'foundry-agents/agents/**'
+      - 'foundry-agents/tests/**'
+      - 'foundry-agents/requirements.txt'
+      - '.github/workflows/run-tests.yml'
+    branches:
+      - bahramr/testingX
+#   pull_request:
+#     branches:
+#       - main
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write    # for OIDC federation (workload identity)
+  contents: read
+
+env:
+  RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP }}
+  LOCATION: ${{ vars.LOCATION }}
+  PYTHON_VERSION: ${{ vars.PYTHON_VERSION || '3.11' }}
+  # Azure Configuration
+  AZURE_EXISTING_AIPROJECT_ENDPOINT: ${{ vars.AZURE_EXISTING_AIPROJECT_ENDPOINT }}
+  AZURE_AI_AGENT_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_AGENT_DEPLOYMENT_NAME }}
+  AZURE_SEARCH_ENDPOINT: ${{ vars.AZURE_SEARCH_ENDPOINT }}
+  AZURE_SEARCH_INDEX: ${{ vars.AZURE_SEARCH_INDEX }}
+  AZURE_SEARCH_SEMANTIC_CONFIG: ${{ vars.AZURE_SEARCH_SEMANTIC_CONFIG }}
+  AZURE_STORAGE_ACCOUNT_NAME: ${{ vars.AZURE_STORAGE_ACCOUNT_NAME }}
+  AZURE_STORAGE_ACCOUNT_URL: ${{ vars.AZURE_STORAGE_ACCOUNT_URL }}
+  AZURE_TABLES_ACCOUNT_URL: ${{ vars.AZURE_TABLES_ACCOUNT_URL }}
+  # Test Configuration
+  API_BASE_URL: ${{ vars.API_BASE_URL }}
+  TEST_APP_ID: ${{ vars.TEST_APP_ID }}
+  TEST_USER_OBJECT_ID: ${{ vars.TEST_USER_OBJECT_ID }}
+  LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    # Run if manually triggered with flag enabled OR on push/PR (default behavior)
+    # Note: Requires vars.ENABLE_UNIT_TESTS='true' to run (disabled by default)
+    if: |
+      (vars.ENABLE_UNIT_TESTS == 'true') && (
+        github.event_name == 'push' || 
+        github.event_name == 'pull_request' || 
+        (github.event_name == 'workflow_dispatch' && inputs.run_unit_tests == true)
+      )
+    runs-on: [self-hosted, mcaps-microsoft-ai-first-migrate-insights-agent]
+    #runs-on: [self-hosted, linux, x64, azure, ai-landing-zone, rg-ai-lz-bicep-int-eastus2-v1_9_7]
+    timeout-minutes: 10
+    environment:
+      name: rg-ai-lz-bicep-int-eastus2-v1_9_7
+    defaults:
+      run:
+        working-directory: foundry-agents
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r tests/test-requirements.txt
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v \
+            --junitxml=test-results-unit.xml \
+            --cov=agents \
+            --cov-report=xml \
+            --cov-report=html
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: foundry-agents/test-results-unit.xml
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage-reports
+          path: |
+            foundry-agents/coverage.xml
+            foundry-agents/htmlcov/
+
+  integration-tests:
+    name: Integration Tests
+    # Run if manually triggered with flag enabled OR on push/PR (default behavior)
+    # Note: Requires vars.ENABLE_INTEGRATION_TESTS='true' to run (disabled by default)
+    if: |
+      always() &&
+      (vars.ENABLE_INTEGRATION_TESTS == 'true') && (
+        github.event_name == 'push' || 
+        github.event_name == 'pull_request' || 
+        (github.event_name == 'workflow_dispatch' && inputs.run_integration_tests == true)
+      )
+    runs-on: [self-hosted, mcaps-microsoft-ai-first-migrate-insights-agent]
+    needs: unit-tests
+    timeout-minutes: 60
+    environment:
+      name: rg-ai-lz-bicep-int-eastus2-v1_9_7
+    defaults:
+      run:
+        working-directory: foundry-agents
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Azure CLI
+        run: |
+          if command -v az &> /dev/null; then
+            echo "✅ Azure CLI already installed: $(az version --query '"azure-cli"' -o tsv 2>/dev/null || az --version | head -1)"
+          else
+            echo "Azure CLI not found, installing via pip..."
+            pip install azure-cli
+            echo "✅ Azure CLI installed: $(az version --query '"azure-cli"' -o tsv 2>/dev/null || az --version | head -1)"
+          fi
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: false
+
+      - name: Verify Azure Authentication
+        run: |
+          echo "Verifying Azure CLI authentication..."
+          az account show
+          echo "✅ Azure authentication verified"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r tests/test-requirements.txt
+
+      - name: Verify test environment
+        run: |
+          python tests/verify_test_environment.py
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v \
+            -m integration \
+            --junitxml=test-results-integration.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: foundry-agents/test-results-integration.xml
+
+  evaluation-tests:
+    name: Evaluation Tests
+    # Run if manually triggered with flag enabled OR on push/PR (default behavior)
+    # Note: Requires vars.ENABLE_EVALUATION_TESTS='true' to run (disabled by default)
+    if: |
+      (vars.ENABLE_EVALUATION_TESTS == 'true') && (
+        github.event_name == 'push' || 
+        github.event_name == 'pull_request' || 
+        (github.event_name == 'workflow_dispatch' && inputs.run_evaluation_tests == true)
+      )
+    runs-on: [self-hosted, mcaps-microsoft-ai-first-migrate-insights-agent]
+    timeout-minutes: 90
+    environment:
+      name: rg-ai-lz-bicep-int-eastus2-v1_9_7
+    defaults:
+      run:
+        working-directory: foundry-agents
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Azure CLI
+        run: |
+          if command -v az &> /dev/null; then
+            echo "✅ Azure CLI already installed: $(az version --query '"azure-cli"' -o tsv 2>/dev/null || az --version | head -1)"
+          else
+            echo "Azure CLI not found, installing via pip..."
+            pip install azure-cli
+            echo "✅ Azure CLI installed: $(az version --query '"azure-cli"' -o tsv 2>/dev/null || az --version | head -1)"
+          fi
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: false
+
+      - name: Verify Azure Authentication
+        run: |
+          echo "Verifying Azure CLI authentication..."
+          az account show
+          echo "✅ Azure authentication verified"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r tests/test-requirements.txt
+
+      - name: Run evaluation tests
+        run: |
+          pytest tests/evaluation/ -v \
+            -m evaluation \
+            --junitxml=test-results-evaluation.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-test-results
+          path: foundry-agents/test-results-evaluation.xml
+
+
+      - name: Upload evaluation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-reports
+          path: foundry-agents/tests/evaluation/responses/
+
+  e2e-tests:
+    name: End-to-End Tests
+    # Run if manually triggered with flag enabled OR on push/PR (default behavior)
+    # Note: Enabled by default, set vars.ENABLE_E2E_TESTS='false' to disable
+    if: |
+      (vars.ENABLE_E2E_TESTS != 'false') && (
+        github.event_name == 'push' || 
+        github.event_name == 'pull_request' || 
+        (github.event_name == 'workflow_dispatch' && inputs.run_e2e_tests == true)
+      )
+    runs-on: [self-hosted, mcaps-microsoft-ai-first-migrate-insights-agent]
+    timeout-minutes: 120
+    environment:
+      name: rg-ai-lz-bicep-int-eastus2-v1_9_7
+    defaults:
+      run:
+        working-directory: foundry-agents
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Azure CLI
+        run: |
+          if command -v az &> /dev/null; then
+            echo "✅ Azure CLI already installed: $(az version --query '"azure-cli"' -o tsv 2>/dev/null || az --version | head -1)"
+          else
+            echo "Azure CLI not found, installing via pip..."
+            pip install azure-cli
+            echo "✅ Azure CLI installed: $(az version --query '"azure-cli"' -o tsv 2>/dev/null || az --version | head -1)"
+          fi
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: false
+
+      - name: Verify Azure Authentication
+        run: |
+          echo "Verifying Azure CLI authentication..."
+          az account show
+          echo "✅ Azure authentication verified"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r tests/test-requirements.txt
+
+      - name: Verify test environment
+        run: |
+          python tests/verify_test_environment.py
+
+      - name: Validate TEST_APP_ID is set
+        run: |
+          if [ -z "$TEST_APP_ID" ]; then
+            echo "❌ ERROR: TEST_APP_ID environment variable is not set"
+            echo "Please set TEST_APP_ID in GitHub repository variables:"
+            echo "Settings → Secrets and variables → Actions → Variables"
+            exit 1
+          fi
+          echo "✅ TEST_APP_ID is set: $TEST_APP_ID"
+
+      - name: Validate TEST_USER_OBJECT_ID is set
+        run: |
+          if [ -z "$TEST_USER_OBJECT_ID" ]; then
+            echo "❌ ERROR: TEST_USER_OBJECT_ID environment variable is not set"
+            echo "Please set TEST_USER_OBJECT_ID in GitHub repository variables:"
+            echo "Settings → Secrets and variables → Actions → Variables"
+            exit 1
+          fi
+          echo "✅ TEST_USER_OBJECT_ID is set: $TEST_USER_OBJECT_ID"
+
+      - name: Run prerequisites check
+        run: |
+          pytest tests/e2e/test_prerequisites.py -v
+
+      - name: Run E2E workflow tests
+        run: |
+          pytest tests/e2e/test_agent_workflow.py -v \
+            --order-scope=class \
+            -x \
+            --junitxml=test-results-e2e.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: foundry-agents/test-results-e2e.xml
+
+      - name: Upload E2E test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs
+          path: foundry-agents/tests/e2e/reports/
+
+  test-summary:
+    name: Test Results Summary
+    runs-on: [self-hosted, mcaps-microsoft-ai-first-migrate-insights-agent]
+    needs: [unit-tests, integration-tests, evaluation-tests, e2e-tests]
+    if: always()
+    environment:
+      name: rg-ai-lz-bicep-int-eastus2-v1_9_7
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-test-results'
+          merge-multiple: true
+
+      - name: Display test summary
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f test-results-unit.xml ]; then
+            echo "✅ Unit tests completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Unit tests skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f test-results-integration.xml ]; then
+            echo "✅ Integration tests completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Integration tests skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f test-results-evaluation.xml ]; then
+            echo "✅ Evaluation tests completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Evaluation tests skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f test-results-e2e.xml ]; then
+            echo "✅ E2E tests completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ E2E tests skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Post PR Comment with Test Results
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Parse JUnit XML files and create summary
+          COMMENT="## 🧪 Test Results Summary\n\n"
+          
+          for file in test-results-*.xml; do
+            if [ -f "$file" ]; then
+              # Extract test category from filename
+              CATEGORY=$(echo $file | sed 's/test-results-//; s/.xml//' | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')
+              
+              # Parse XML for test counts
+              TESTS=$(grep -oP 'tests="\K[0-9]+' "$file" | head -1 || echo "0")
+              FAILURES=$(grep -oP 'failures="\K[0-9]+' "$file" | head -1 || echo "0")
+              ERRORS=$(grep -oP 'errors="\K[0-9]+' "$file" | head -1 || echo "0")
+              TIME=$(grep -oP 'time="\K[0-9.]+' "$file" | head -1 || echo "0")
+              
+              PASSED=$((TESTS - FAILURES - ERRORS))
+              MINUTES=$(echo "scale=1; $TIME / 60" | bc 2>/dev/null || echo "0")
+              
+              if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+                COMMENT="${COMMENT}**${CATEGORY}**: ❌ $PASSED passed, $((FAILURES + ERRORS)) failed in ${MINUTES}m\n"
+              else
+                COMMENT="${COMMENT}**${CATEGORY}**: ✅ $PASSED passed in ${MINUTES}m\n"
+              fi
+            fi
+          done
+          
+          COMMENT="${COMMENT}\n---\n*View detailed results in [Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*"
+          
+          # Post comment to PR
+          echo -e "$COMMENT" | gh pr comment ${{ github.event.pull_request.number }} --body-file -

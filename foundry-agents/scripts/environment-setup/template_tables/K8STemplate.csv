@@ -1,0 +1,56 @@
+PartitionKey,RowKey,Category,Category@type,Comments,Comments@type,Guidance,Guidance@type,Question,Question@type,Response,Response@type
+1001,1001,GENERIC INFORMATION,String,,String,For example: EKS/Docker/K8S on VM,String,Current container orchestrator being utilized?,String,,String
+1002,1002,GENERIC INFORMATION,,,,Number of clusters deployed for the application.,,How many clusters are being used?,,,
+1003,1003,GENERIC INFORMATION,,,,Specify the version(s) in use.,,What Kubernetes version is currently being used?,,,
+1004,1004,CLUSTER CONFIGURATION INFORMATION,,,,"Total CPU, Memory and Disk",,Estimated/current size of the application in the cluster,,,
+1005,1005,CLUSTER CONFIGURATION INFORMATION,,,,"List the instance types used (e.g., t3.medium, m5.large).",,What instance types/Instance family are being used for the nodes in the cluster?,,,
+1006,1006,CLUSTER CONFIGURATION INFORMATION,,,,Specify the number of nodes per cluster.,,How many nodes are there in each cluster?,,,
+1007,1007,CLUSTER CONFIGURATION INFORMATION,,,,Describe any taints and tolerations used to control pod placement.,,Are there any taints and tolerations applied to the nodes?,,,
+1008,1008,CLUSTER CONFIGURATION INFORMATION,,,,Specify the network plugin used.,,"What network plugin is in use (e.g., Amazon VPC CNI, Calico)?",,,
+1009,1009,WORKLOAD INFORMATION,,,,Number of namespaces created and their names,,How many namespaces are in use within the clusters? And names,,,
+1010,1010,WORKLOAD INFORMATION,,,,To get access to the NS,,AD group names to get the namespace access.,,,
+1011,1011,WORKLOAD INFORMATION,,,,"List the types of Kubernetes workloads.
+E.g. Deployments, StatefulSets, Jobs",,"What types of workloads are being deployed (e.g., Deployments, StatefulSets, DaemonSets, Jobs)?",,,
+1012,1012,WORKLOAD INFORMATION,,,,kubectl describe ns <NAME>,,Namespace describe output,,,
+1013,1013,WORKLOAD INFORMATION,,,,"Deployment methods used for the application.
+E.g. Helm charts and plain YAML files",,"How are the workloads deployed (e.g., Helm charts, Kustomize, plain YAML files)?",,,
+1014,1014,WORKLOAD INFORMATION,,,,"e.g., helm chart repository",,Deployment code repository,,,
+1015,1015,WORKLOAD INFORMATION,,,,Specify if any CRDs are in use.,,Are there any custom resource definitions (CRDs) being used?,,,
+1016,1016,WORKLOAD INFORMATION,,,,"Identify any operators or controllers being used.
+E.g. Prometheus Operator, Cert-Manager",,"Are any operators or controllers in use? If so, which ones?",,,
+1017,1017,WORKLOAD INFORMATION,,,,"pods (compute with request and limit), deployments, storage, Services and ingress",,List of deployed resources and sizing,,,
+1018,1018,WORKLOAD INFORMATION,,,,To filter the containers from the EHDS portal,,EHDS Tenant name and list of Microservices deployed to CaaS for each environment,,,
+1019,1019,WORKLOAD INFORMATION,,,,"List the storage classes used.
+E.g. gp2, io1",,What storage classes are in use?,,,
+1020,1020,WORKLOAD INFORMATION,,,,Identify if PVCs are used and their purpose.,,"Are there any persistent volume claims (PVCs) in use? or
+List of Stateful deployments",,,
+1021,1021,WORKLOAD INFORMATION,,,,Specify the storage backend(s) in use.,,"What type of storage backend is being used (e.g., EBS, EFS, S3) and current size?",,,
+1022,1022,WORKLOAD INFORMATION,,,,Like cross accounts dependancies like S3 on another AWS account,,Any cross account dependancies for the kubernetes workload?,,,
+1023,1023,NETWORK INFORMATION,,,,"Describe how network traffic is managed.
+E.g. NGINX Ingress controller, Istio Service Mesh",,"How is network traffic managed within the cluster (e.g., Ingress controllers, Service Mesh)?",,,
+1024,1024,NETWORK INFORMATION,,,,Specify the Ingress controller used.,,"What Ingress controller is in use (e.g., NGINX, ALB Ingress Controller)?",,,
+1025,1025,NETWORK INFORMATION,,,,Identify if any network policies are configured.,,Are there any network policies in place to control traffic between pods?,,,
+1026,1026,Security,,,,Any IAM roles used for authentication with other AWS services from pods,,Configured Pods to use any Kubernetes service account for AWS services? Details,,,
+1027,1027,Security,,,,"Describe how secrets are managed securely.
+Eg. AWS Secrets Manager for sensitive information",,"What measures are taken for securing secrets (e.g., Kubernetes Secrets, AWS Secrets Manager)?",,,
+1028,1028,CI/CD,,,,DevOps teams / EHDS team,,Team/people involved in developing and deploying the applications,,,
+1029,1029,CI/CD,,,,Identify the CI/CD tools in use.,,"What CI/CD tools are being used for deployment (e.g., ArgoCD, Jenkins, GitLab CI, AWS CodePipeline)?",,,
+1030,1030,CI/CD,,,,Specify the deployment strategies used.,,"Describe the deployment strategy (e.g., blue-green, canary, rolling updates):",,,
+1031,1031,CI/CD,,,,Describe any automated testing or QA processes.,,Are there any automated testing or quality assurance processes integrated with deployments?,,,
+1032,1032,Monitoring and Logging,,,,List the monitoring tools in use.,,"What tools are used for monitoring the cluster and workloads (e.g., Prometheus, Grafana, CloudWatch)?",,,
+1033,1033,Monitoring and Logging,,,,Describe the logging strategy.,,"How is logging managed (e.g., Fluentd, Elasticsearch, CloudWatch Logs)?",,,
+1034,1034,Monitoring and Logging,,,,"Identify if there are alerting systems configured.
+E.g. Alertmanager, CloudWatch Alarms",,Are there any alerting mechanisms in place?,,,
+1035,1035,Monitoring and Logging,,,,Describe the performance monitoring setup.,,How is cluster and application performance monitored?,,,
+1036,1036,Autoscaling and Performance,,,,Specify if HPAs are used.,,Are there any Horizontal Pod Autoscalers (HPAs) in place?,,,
+1037,1037,Autoscaling and Performance,,,,Identify if cluster autoscaling is configured.,,"Is the cluster autoscaling enabled (e.g., Cluster Autoscaler, Karpenter)?",,,
+1038,1038,Autoscaling and Performance,,,,List the metrics used for autoscaling.,,What metrics are used for scaling decisions?,,,
+1039,1039,Autoscaling and Performance,,,,Describe any performance-related concerns.,,Are there any known performance bottlenecks or issues?,,,
+1040,1040,Health Checks,,,,Describe the readiness probes in use.,,Are readiness probes configured for the workloads?,,,
+1041,1041,Health Checks,,,,Describe the liveness probes in use.,,Are liveness probes configured for the workloads?,,,
+1042,1042,Health Checks,,,,Describe the startup probes in use.,,Are there startup probes configured for the workloads?,,,
+1043,1043,Backup and DR,,,,Describe the backup strategy.,,What is the current strategy for cluster and application backup?,,,
+1044,1044,Backup and DR,,,,Identify if there are DR plans and describe them.,,Are there any disaster recovery plans in place?,,,
+1045,1045,Backup and DR,,,,Specify the backup frequency and testing procedures.,,How frequently are backups performed and tested?,,,
+1046,1046,Backup and DR,,,,"List the tools used for backup and restore.
+E.g. Velero, AWS Backup",,What tools are used for backup and restore operations?,,,

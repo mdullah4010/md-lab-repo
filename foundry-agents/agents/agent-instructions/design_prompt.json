@@ -1,0 +1,174 @@
+{
+  "title": "Azure Migration Design Document",
+  "mcp_tools_allowed": [],
+  "sections_array": [
+    {
+      "id": "1. Executive Summary",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "generate an executive summary for the Azure migration design. Include: Application Name, Design Date (use current date), Document Version (1.0), Primary Author (Azure Design Agent), Key highlights of the migration approach, and a brief overview of the recommended solution. Output in markdown format with appropriate headings.",
+      "table_name": null
+    },
+    {
+      "id": "2. Application Overview",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "create a comprehensive Application Overview table. Extract and present: Application Name, Application ID, Business Unit, Environment Type, Current Hosting Model, Technology Stack, Primary Database, Integration Count, Business Criticality, Data Classification. Format as a markdown table with Property | Value columns.",
+      "table_name": null
+    },
+    {
+      "id": "3. Migration Strategy",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Based on the intake assessment documents, recommend a migration strategy (Rehost/Refactor/Rearchitect/Rebuild). Provide: Recommended Strategy, Strategy Rationale (why this approach), Key Benefits, Potential Risks, and Migration Complexity Assessment. Use markdown formatting with clear sections.",
+      "table_name": null
+    },
+    {
+      "id": "4. Architecture Diagrams",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "This section header indicates the start of architecture diagram sections. No content needed for this header section.",
+      "table_name": null
+    },
+    {
+      "id": "4.1 As-Is Architecture",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "generate a current-state (As-Is) architecture diagram using Mermaid syntax (graph TD). Include all existing components found in the assessment: servers, databases, load balancers, web servers, application servers, and external integrations. Show the high-level technical view of the current infrastructure. Rules: Use graph TD format, NEVER use parentheses in node labels (use 'with' or '-' instead), apply Azure-themed styling with classDef.  Declare classes with classDef and apply them using class Node1, Node2 className. Provide both a description and the complete Mermaid diagram code block.",
+      "table_name": null
+    },
+        {
+      "id": "4.2 Target Architecture",
+      "knowledge": { "document": [], "mcp": ["microsoft_learn"] },
+      "prompt": "Use microsoft learn mcp server as knowledge source to generate this target azure architecture adhering to well architecture framework design principles. Create a detailed Azure target solution with Recommended Azure services mapped to current components, Networking architecture (VNets, subnets, NSGs), Security controls and identity management, Infrastructure components and resource organization, Use structured markdown sections for readability, Base recommendations on Azure best practices and Well-Architected Framework. Rules: Use graph TD format, NEVER use parentheses in node labels (use 'with' or '-' instead), apply Azure-themed styling with classDef. Declare classes with classDef and apply them using class Node1, Node2 className.Provide both a description and the complete Mermaid diagram code block.",
+      "table_name": null
+    },
+    {
+      "id": "4.3 Logical View",
+      "knowledge": { "document": [], "mcp": ["microsoft_learn"] },
+      "prompt": "Use microsoft learn mcp server as knowledge source to generate this Logical View adhering to well architecture framework design principles. Create a Logical View (Conceptual) diagram for the target Azure architecture using Mermaid syntax. Represent: actors (users, admins, external systems), systems, trust boundaries (use Mermaid subgraphs), and data flow. Focus on conceptual components and show interactions/relationships. Use graph TD format with Azure-themed styling. Provide both a description and the complete Mermaid diagram code block. NEVER use parentheses in node labels (use 'with' or '-' instead).  Declare classes with classDef and apply them using class Node1, Node2 className.",
+      "table_name": null
+    },
+    {
+      "id": "4.4 High-Level Technical View",
+      "knowledge": { "document": [], "mcp": ["microsoft_learn"] },
+      "prompt": "Use microsoft learn mcp server as knowledge source to generate this High-Level Technical View adhering to well architecture framework design principles. Create a High-Level Technical View diagram using Mermaid graph LR (left-to-right) syntax. Map conceptual components to specific Azure services. Categorize services as: Platform services, Shared services, Workload-specific services. Include: Azure Front Door/Application Gateway, WAF, identity layers (Entra ID), data flow governance. Use Azure-themed styling. Provide both a description and the complete Mermaid diagram code block. NEVER use parentheses in node labels (use 'with' or '-' instead).Declare classes with classDef and apply them using class Node1, Node2 className.",
+      "table_name": null
+    },
+    {
+      "id": "4.5 Detailed Infrastructure View",
+      "knowledge": { "document": [], "mcp": ["microsoft_learn"] },
+      "prompt": "Use microsoft learn mcp server as knowledge source to generate this Detailed Infrastructure View adhering to well architecture framework design principles. Create a Detailed Infrastructure View diagram using Mermaid syntax with subgraphs for: Subscriptions, Resource Groups, VNets, and Subnets. Include: VNet peering connections, NSGs, Private Link, Private Endpoints, RBAC boundaries, Managed Identities, Azure Monitor, and Log Analytics. Highlight Microsoft SCF security pillars. Use graph TD format with Azure-themed styling. Provide both a description and the complete Mermaid diagram code block. NEVER use parentheses in node labels (use 'with' or '-' instead). Declare classes with classDef and apply them using class Node1, Node2 className.",
+      "table_name": null
+    },
+    {
+      "id": "4.6 Networking and Security View",
+      "knowledge": { "document": [], "mcp": ["microsoft_learn"] },
+      "prompt": "Use microsoft learn mcp server as knowledge source to generate this Networking and Security View adhering to well architecture framework design principles. Create a Networking and Security View diagram using Mermaid syntax. Illustrate: NSG rule flows, Firewall rules, VPN/ExpressRoute connections if applicable, micro-segmentation, security zones, network isolation patterns. Show ingress/egress traffic flows and align with Azure network security best practices. Use graph TD format with Azure-themed styling. Provide both a description and the complete Mermaid diagram code block. NEVER use parentheses in node labels (use 'with' or '-' instead). Declare classes with classDef and apply them using class Node1, Node2 className.",
+      "table_name": null
+    },
+    {
+      "id": "4.7 Monitoring and Logging View",
+      "knowledge": { "document": [], "mcp": ["microsoft_learn"] },
+      "prompt": "Use microsoft learn mcp server as knowledge source to generate this Monitoring and Logging View adhering to well architecture framework design principles. Create a Monitoring and Logging View diagram using Mermaid syntax. Include: Azure Monitor, Log Analytics Workspace, Diagnostic Settings flow, Application Insights, SIEM integration (Microsoft Sentinel), Alert rules, Metrics collection paths. Ensure coverage of observability and incident response patterns. Use graph TD format with Azure-themed styling. Provide both a description and the complete Mermaid diagram code block. NEVER use parentheses in node labels (use 'with' or '-' instead). Declare classes with classDef and apply them using class Node1, Node2 className.",
+      "table_name": null
+    },
+    {
+      "id": "5. Azure Resources Specification",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "This section header indicates the start of Azure resource specification sections. No content needed for this header section.",
+      "table_name": null
+    },
+    {
+      "id": "5.1 Resource Group Configuration",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Based on the migration strategy and infrastructure requirements from the intake assessment, define the Resource Group configuration. Create a markdown table with columns: Resource Group Name | Purpose | Location | Tags. Follow Azure naming conventions (e.g., rg-{app}-{env}-{region}). Include resource groups for: networking, compute, data, security/identity, and monitoring.",
+      "table_name": null
+    },
+    {
+      "id": "5.2 Compute Resources",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the compute resources needed for the Azure migration. Create a markdown table with columns: Resource Name | Resource Type | SKU/Size | Quantity | Location | Resource Group | Configuration Notes. Include: App Services, VMs, AKS clusters, Container Instances, or Function Apps as appropriate based on the intake assessment. Use Azure naming conventions.",
+      "table_name": null
+    },
+    {
+      "id": "5.3 Database Resources",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the database resources needed for the Azure migration. Create a markdown table with columns: Resource Name | Database Type | SKU/Tier | Storage Size | Location | Resource Group | Configuration Notes. Map current databases to Azure equivalents: Azure SQL, Cosmos DB, Azure Database for MySQL/PostgreSQL, etc. Include HA/DR configuration notes.",
+      "table_name": null
+    },
+    {
+      "id": "5.4 Storage Resources",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the storage resources needed for the Azure migration. Create a markdown table with columns: Resource Name | Storage Type | SKU | Capacity | Location | Resource Group | Configuration Notes. Include: Storage Accounts (blob, file, queue, table), Azure Files, Azure NetApp Files as needed. Specify redundancy options (LRS, GRS, ZRS).",
+      "table_name": null
+    },
+    {
+      "id": "5.5 Networking Resources",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the networking resources needed for the Azure migration. Create two markdown tables: 1) Network Resources table with columns: Resource Name | Resource Type | Configuration | Location | Resource Group. Include: VNets, Subnets, NSGs, Route Tables, Private Endpoints, Application Gateway/Load Balancer, VPN Gateway if needed. 2) NSG Rules table with columns: NSG Name | Rule Name | Priority | Direction | Source | Destination | Port | Protocol | Action.",
+      "table_name": null
+    },
+    {
+      "id": "5.6 Security Resources",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the security resources needed for the Azure migration. Create a markdown table with columns: Resource Name | Resource Type | SKU/Tier | Location | Resource Group | Configuration Notes. Include: Azure Key Vault, Managed Identities, Microsoft Defender for Cloud, Azure Firewall, WAF policies, DDoS Protection if needed.",
+      "table_name": null
+    },
+    {
+      "id": "5.7 Identity and Access Management",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the Identity and Access Management configuration. Create two sections: 1) Identity Resources table with columns: Resource Name | Type | Purpose | Configuration. Include: Managed Identities, Service Principals, App Registrations. 2) RBAC Assignments table with columns: Principal Name | Principal Type | Role | Scope | Resource. Define role assignments following least-privilege principle.",
+      "table_name": null
+    },
+    {
+      "id": "5.8 Monitoring and Observability",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the monitoring and observability resources. Create two sections: 1) Monitoring Resources table with columns: Resource Name | Resource Type | Configuration | Location | Resource Group. Include: Log Analytics Workspace, Application Insights, Azure Monitor, Action Groups. 2) Alerts Configuration table with columns: Alert Name | Resource | Condition | Threshold | Severity | Action Group.",
+      "table_name": null
+    },
+    {
+      "id": "5.9 DevOps and CI/CD",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "define DevOps and CI/CD recommendations. Create a markdown table with columns: Component | Tool/Service | Purpose | Configuration Notes. Include: Azure DevOps or GitHub Actions, Container Registry, deployment pipelines, IaC tools (Bicep/Terraform) recommendations.",
+      "table_name": null
+    },
+    {
+      "id": "5.10 Backup and Disaster Recovery",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Define the backup and disaster recovery configuration. Create a markdown table with columns: Resource | Backup Type | Frequency | Retention | Recovery Target (RTO/RPO) | DR Strategy. Include backup configurations for: databases, VMs, storage accounts, and application data. Specify Azure Backup or Azure Site Recovery usage.",
+      "table_name": null
+    },
+    {
+      "id": "6. Cost Estimation",
+      "knowledge": { "document": [], "mcp": ["azurepricing"] },
+      "prompt": "Based on all the information about the Azure resources that you just generated, provide a comprehensive cost estimation. Use the Azure Pricing MCP server tool to get accurate pricing data for each Azure service you generated. Create a markdown table with columns: Item # | Service | SKU | Quantity | Unit Cost (USD) | Monthly Cost (USD). Include: compute, databases, storage, networking, security, monitoring resources. Calculate totals per category and provide a grand total monthly cost. State any assumptions made.",
+      "table_name": null
+    },
+    {
+      "id": "7. Target Services Mapping",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Create a mapping table showing how current on-premises or existing services map to Azure services. Create a markdown table with columns: Current Service/Component | Current Technology | Target Azure Service | Migration Approach | Notes. Include all major components from the intake assessment: web servers, app servers, databases, load balancers, monitoring tools, etc.",
+      "table_name": null
+    },
+    {
+      "id": "8. Deployment Guidance",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Provide deployment guidance for the Azure migration. Include three sections: 1) Prerequisites - list required Azure subscriptions, permissions, tools, and pre-migration tasks. 2) Deployment Sequence - numbered list of deployment steps in recommended order. 3) Infrastructure as Code (IaC) Recommendations - recommend Bicep or Terraform, module structure, and deployment automation approach.",
+      "table_name": null
+    },
+    {
+      "id": "9. Security and Compliance",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "define security and compliance requirements. Create two tables: 1) Security Controls table with columns: Control Category | Control | Implementation | Azure Service. Categories: Network Security, Data Protection, Identity Management, Monitoring. 2) Compliance Requirements table with columns: Requirement | Standard | Implementation Status | Notes. Reference any compliance requirements from the intake assessment.",
+      "table_name": null
+    },
+    {
+      "id": "10. Well-Architected Framework Alignment",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Analyze how the proposed design aligns with the Azure Well-Architected Framework. Create a markdown table with columns: Pillar | Design Element | Implementation | Score (1-5). Cover all five pillars: Cost Optimization, Operational Excellence, Performance Efficiency, Reliability, Security. Provide specific examples of how the design addresses each pillar.",
+      "table_name": null
+    },
+    {
+      "id": "11. Appendix",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Create an appendix section with three subsections: 1) Assumptions - list all assumptions made during the design process. 2) Dependencies - list external dependencies, prerequisites, and integration requirements. 3) Risks and Mitigations - table with columns: Risk | Impact | Probability | Mitigation Strategy. Include technical, operational, and timeline risks.",
+      "table_name": null
+    }
+  ]
+}

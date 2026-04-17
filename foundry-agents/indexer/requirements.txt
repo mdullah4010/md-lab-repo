@@ -1,0 +1,32 @@
+# FastAPI and ASGI server
+fastapi
+uvicorn[standard]
+pydantic
+
+# Azure SDKs
+azure-search-documents==11.6.0b5
+azure-storage-blob
+azure-identity
+azure-core
+azure-ai-projects
+azure-monitor-opentelemetry
+
+# OpenAI and OpenTelemetry
+openai>=1.0.0
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-instrumentation-openai-v2
+
+# Document processing
+python-docx
+pypdf==6.6.2  # Security: Updated to fix RAM exhaustion and infinite loop vulnerabilities
+pandas
+openpyxl
+
+# Utilities
+numpy
+tenacity
+requests
+
+# Security scanning
+detect-secrets

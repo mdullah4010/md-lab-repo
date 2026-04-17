@@ -1,0 +1,14 @@
+# Azure AI Projects SDK for agent creation and execution
+azure-ai-projects>=1.0.0
+
+# Azure Identity for authentication
+azure-identity>=1.15.0
+
+# Application Insights and OpenTelemetry for tracing
+azure-monitor-opentelemetry>=1.6.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-requests>=0.41b0
+
+# Environment variable management
+python-dotenv>=1.0.0

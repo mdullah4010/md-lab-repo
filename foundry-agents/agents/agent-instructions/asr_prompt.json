@@ -1,0 +1,125 @@
+{
+  "title": "Application Summary Report (ASR) Template",
+  "mcp_tools_allowed": [],
+  "sections_array": [
+    {
+      "id": "1. Application Overview",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Using ONLY the indexed documents and exported table snapshot records (_SourceTable=AppDetails*), first identify ALL environments for this application from the data (examples: Dev, SIT, Test, QA, UAT, PAT, Pre-Prod, Production, or any custom environment names).Map each environment with the respective business criticality, respective service category, respective information classification strictly based on indexed data. Output a markdown table with columns: Environment | Business Criticality | Service Category | Information Classification. Include an overall application classification at the end. If any value is not found write '-'.",
+      "table_name": null
+    },
+    {
+      "id": "1.1 Key Contacts",      
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Using only indexed content (_SourceTable=AppDetails* rows or documents), extract key migration contacts. Output table: Full Name | Email | Title/Role | Source.",
+      "table_name": null
+    },
+    {
+      "id": "2. Current Architecture",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Using ONLY the indexed documents and exported table snapshot records (_SourceTable contains Architecture*), provide a detailed overview of the current architecture for the application. Include information about the technology stack, deployment model (e.g., on-premises, cloud), and any relevant architectural diagrams or descriptions."
+    },
+    {
+      "id": "2.1 Overall Application Complexity and Readiness Score",
+      "prompt": "Using ONLY the documents and exported table snapshot records (_SourceTable contains Architecture*), determine: 1) Application complexity level (High, Medium, or Low), 2) Migration readiness score (1-10 scale). For each, provide the rating and explain key factors that influenced it (application architecture, dependencies, data volume, technical constraints). Format with clear headings: 'Complexity Level:' and 'Readiness Score:'.",
+      "knowledge": { "document": [], "mcp": [] }
+    },
+    {
+      "id": "3. Migration Strategy",
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": ""
+    },
+    {
+      "id": "3.1 Migration Pattern and Infrastructure Details",      
+      "table_name": null,
+      "prompt": "First, identify ALL environments for this application from only table records (_SourceTable contains 'AppDetails*' or 'InfrastructureDetails*'). For each of the environments search for all the servers from only indexed document infrajsonl_* which is associated with the metadata {\"document_state\": \"final\", \"category\": \"infrajsonl\"} . Then, for EACH environment and for each server/database discovered, compile comprehensive infrastructure and migration details. Use the migration-matrix.json knowledge to propose target specifications, prioritizing the highest level of modernization feasible. For the 'Target Security Zone' column, determine the correct security zone for each environment and layer (presentation, application, middleware, database) using the knowledge in security-zoneing.json. Output a table with the following columns: VM Hostname (FQDN) | IP Address | Server Function (Web/App/DB/Other) | Operating System | vCPU | RAM (GB) | Database Type and Version (if applicable) | Database Size (GB) (if applicable) | Server Environment (Dev/Test/SIT/UAT/Non-Prod/Prod) | On-prem Security Zone | Target Security Zone | Target Migration Strategy | Target Azure Service/SKU | Migration Complexity | Reasoning | General Notes | Source. Include ALL discovered environments and servers. Use '-' for any field where data is not available.",
+      "knowledge": { "document": ["migration-matrix.json", "security-zone-mapping.json"], "mcp": [] }
+    },
+    {
+      "id": "4. Indicative Azure Cost",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": ["azurepricing"] },
+      "prompt": "First, identify ALL environments for this application from indexed documents (_SourceTable contains 'AppDetails*'). Based on the Migration Pattern and Infrastructure Details previously determined, identify all required Azure components for EACH environment. Use Azure Pricing MCP server to estimate costs. For EACH identified environment, provide a detailed cost breakdown in tabular format with columns: Environment | Component | SKU | Monthly Cost (USD). Include component-wise cost for each environment and the total monthly cost per environment at the bottom of each section. Cover ALL environments discovered. If any required information is missing, make reasonable assumptions and clearly state them."
+    },
+    {
+      "id": "5. Macro Dependencies",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Identify all application related dependencies and list them in a table: Dependency Name | Type (Application/Database/API/Service) | Integration Method | Criticality (High/Medium/Low) | Migration Impact | Source. Then provide a textual description of the dependency flow."
+    },
+    {
+      "id": "6. Security Considerations",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Identify key security considerations (data protection, access controls, compliance) using only indexed security/privacy records (_SourceTable=PrivacyAndSecurity* or related docs). Provide concise bullet list; each bullet ends with a source in parentheses."
+    },
+    {
+      "id": "7. Resiliency Consideration",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "First, identify ALL environments for this application and their Business Criticality from indexed documents (_SourceTable=AppDetails*). Then, for EACH identified environment, recommend appropriate resiliency configurations based on its criticality. Specify: RTO/RPO targets, HA configuration (Availability Zones, multi-region), DR strategy (Active-Active/Active-Passive), backup frequency, and estimated monthly cost for resiliency components. Format as table: Environment | Business Criticality | RTO | RPO | HA Design | DR Strategy | Backup Policy | Monthly Cost. Include ALL discovered environments."
+    },
+    {
+      "id": "8. Network Access Requirements",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Using indexed documents and table records (_SourceTable contains 'Network*' or 'Infrastructure*'), identify network access requirements for this application. Focus on: 1) Access restrictions (internal only, external facing, developer/admin access needs), 2) Any special security considerations (private endpoints, VPN requirements, firewall rules), 3) Network dependencies or constraints mentioned in documentation. Provide a concise bullet list with sources cited."
+    },
+    {
+      "id": "9. Identity Providers",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "List the identity providers used by the application in a tabular format with the following columns: Identity Provider | Type (e.g., SAML, OAuth, OpenID) | Usage (e.g., User Authentication, API Access). The data has to be fetched from indexed documents and table records via Azure AI Search."
+    },
+    {
+      "id": "10. Automation",      
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Identify current CI/CD and IaC practices from indexed documents (_SourceTable contains 'CICD*' or 'DevOps*'). Output table: Tool/Platform | Purpose (App Deployment/Infra Provisioning/Testing) | Current State | Azure Equivalent | Migration Complexity. If none exist, recommend Azure DevOps or GitHub Actions setup for the target environment."
+    },
+    {
+      "id": "11. Observability",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Identify if the application or infrastructure uses any monitoring platform, security vulnerability tool, or other observability tool from indexed documents (_SourceTable contains 'Observability*' or 'Monitoring*' or operations docs). List all details in a structured format: Tool Name | Purpose | Current Usage | Azure Equivalent."
+    },
+    {
+      "id": "12. Migration Acceptance Tests",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Search indexed documents and table records for any migration acceptance test plan, test strategy document, or test cases link. If found, provide the document name/link with text: 'Migration acceptance test documentation is available: [document name/link]'. If no test documentation is found, state: 'No migration acceptance test documentation found in indexed sources.'"
+    },
+    {
+      "id": "13. Customer Impact",
+      "table_name": null,
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "Using indexed documents and table records (_SourceTable contains 'AppDetails*' or 'Business*'), identify customer impact metrics: 1) Total number of users/consumers of this application, 2) User types/categories (internal employees, external customers, partners, etc.), 3) If downtime is required, how many users/consumers will be impacted during the migration window, 4) Business impact of downtime (revenue loss, operational disruption, compliance risks, customer satisfaction), 5) Peak usage times to avoid for migration window. Format as structured sections with clear numbers and business impact statement."
+    },
+    {
+      "id": "14. Supporting Documentation",
+      "knowledge": { "document": [], "mcp": [] },
+      "prompt": "List all the supporting documents available for this application like Architecture diagrams, DR diagrams, Network diagrams, Security documents, Compliance documents, Run books, SOPs etc. from the AI search citations. Also identify MISSING critical documents needed for migration (e.g., if no DR plan exists, note 'DR Plan - MISSING - Required')."
+    },
+    {
+      "id": "15. Technical Debt",
+      "prompt": "Using ONLY the documents and exported table snapshot records (_SourceTable contains Architecture*), identify technical debt items in the current architecture. For each item provide: 1) Description of the technical debt, 2) Impact on migration process, 3) Recommended mitigation strategy. Format as a structured list with clear bullet points.",
+      "knowledge": { "document": [], "mcp": [] }
+    },
+    {
+      "id": "16. Target Azure Subnet Sizing",
+      "table_name": null,
+      "knowledge": { "document": ["subnet-sizing-knowledge.json"], "mcp": [] },
+      "prompt": "For each environment discovered, analyze the number of servers in each application layer (e.g., Web, App, DB, etc.). Assign a dedicated subnet to each layer. Use the subnet-sizing-knowledge.json rules: For 1-3 servers, use /29; for 4-10, use /28; for 11-30, use /27; for 31-62, use /26; for 63-126, use /25; for 127-254, use /24. If an Azure Application Gateway is present, allocate a dedicated subnet for it. Output a table per environment with columns: Environment | Layer | Number of Servers | Subnet Mask | Dedicated App Gateway Subnet (Yes/No) | Notes."
+    },
+    {
+      "id": "17. Azure Subscription Tagging",
+      "table_name": null,
+      "knowledge": { "document": ["subscription-tags.json"], "mcp": [] },
+      "prompt": "Using the provided subscription-tags.json knowledge, summarize the subscription tags relevant to this application. For each environment discovered for the application, repeat the following: For each tag, first search indexed documents and exported table snapshot records in Azure AI Search for its value. If no value is found in AI Search, use the default value from subscription-tags.json. If neither is available, leave the value blank. Output a table for each environment with columns: Environment | Tag Name | Tag Value | Description | Source. If any tag is missing, note it in the Description column. Ensure that every discovered environment has its own subscription tags table in the output."
+    },
+    {
+      "id": "18. Kubernetes Assessment Summary",
+      "prompt": "Using ONLY the documents and exported table snapshot records (_SourceTable contains K8S*), provide a summary of the Kubernetes assessment for the application. Include details such as current Kubernetes usage, containerization status, orchestration tools, and any relevant findings or recommendations for migrating to a Kubernetes-based environment.",
+      "knowledge": { "document": [], "mcp": [] }
+    }
+  ]
+}

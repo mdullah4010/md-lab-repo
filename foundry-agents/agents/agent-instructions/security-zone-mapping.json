@@ -1,0 +1,23 @@
+{
+  "environments": {
+    "preproduction": {
+      "presentation_layer": "EP",
+      "application_layer": "EA",
+      "middleware_layer": "EM",
+      "database_layer": "ED"
+    },
+    "production": {
+      "presentation_layer": "EP",
+      "application_layer": "EA",
+      "middleware_layer": "EM",
+      "database_layer": "ED"
+    },
+    "other": {
+      "presentation_layer": "TP",
+      "application_layer": "TA",
+      "middleware_layer": "TA",
+      "database_layer": "TD"
+    }
+  },
+  "notes": "For environments other than preproduction and production (e.g., test, dev, etc.), use the 'other' mapping."
+}

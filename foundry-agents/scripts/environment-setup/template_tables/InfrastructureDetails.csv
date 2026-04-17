@@ -1,0 +1,1 @@
+PartitionKey,RowKey,Timestamp,ETag,ApplicationName,DisksAndSize,Domain,IPAddress,LunId,OnpremSecurityZone,OperatingSystem,RAM,ServerEnvironment,ServerFunction,VMHostname,vCPU
